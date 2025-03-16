@@ -104,11 +104,11 @@ def setup_collections():
     db = client["embeddings_db"]
     
     # Define collections based on your Prisma schema
-    # These are just examples - modify according to your actual Prisma schema
     collections = [
         "documents",  # For storing documents with embeddings
-        "categories",  # If you had a categories table
+        "folders",    # NEW: For organizing documents into folders
         "users",      # If you had a users table
+        "chunks",     # For storing document chunks
         # Add other collections based on your schema
     ]
     
@@ -136,30 +136,30 @@ def create_indexes():
     db.documents.create_index("title")
     
     # Create vector index for similarity search
-    try:
-        # For MongoDB Atlas (uses different API than self-hosted MongoDB)
-        # all-MiniLM-L6-v2 uses 384-dimensional embeddings
-        db.command({
-            "createSearchIndex": {
-                "name": "vector_index",
-                "definition": {
-                    "mappings": {
-                        "dynamic": False,
-                        "fields": {
-                            "embedding": {
-                                "type": "knnVector",
-                                "dimensions": 384,
-                                "similarity": "cosine"
-                            }
-                        }
-                    }
-                }
-            }
-        })
-        print("Vector search index created successfully")
-    except Exception as e:
-        print(f"Warning: Could not create vector search index: {e}")
-        print("Note: Vector search requires MongoDB Atlas with Vector Search or MongoDB 7.0+")
+    # try:
+    #     # For MongoDB Atlas (uses different API than self-hosted MongoDB)
+    #     # all-MiniLM-L6-v2 uses 384-dimensional embeddings
+    #     db.command({
+    #         "createSearchIndex": {
+    #             "name": "vector_index",
+    #             "definition": {
+    #                 "mappings": {
+    #                     "dynamic": False,
+    #                     "fields": {
+    #                         "embedding": {
+    #                             "type": "knnVector",
+    #                             "dimensions": 384,
+    #                             "similarity": "cosine"
+    #                         }
+    #                     }
+    #                 }
+    #             }
+    #         }
+    #     })
+    #     print("Vector search index created successfully")
+    # except Exception as e:
+    #     print(f"Warning: Could not create vector search index: {e}")
+    #     print("Note: Vector search requires MongoDB Atlas with Vector Search or MongoDB 7.0+")
     
     # Don't close the client here as it might be needed later
 

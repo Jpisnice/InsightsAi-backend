@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 
 import os
-import asyncio
 import sys
+import asyncio
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+
+# Add parent directory to Python path so we can import modules
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
+# Now we can import from modules
 from modules.mongodb_config import get_client, setup_collections, create_indexes
 
 async def main():
@@ -22,7 +28,7 @@ async def main():
         collections = setup_collections()
         print(f"Collections created: {collections}")
         
-        # Create indexes
+        # Create indexes for better performance
         print("Creating indexes...")
         create_indexes()
         

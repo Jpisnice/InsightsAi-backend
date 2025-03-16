@@ -22,6 +22,7 @@ db = mongo_client["embeddings_db"]
 user_collection = db["users"]
 document_collection = db["documents"]
 chunk_collection = db["chunks"]
+folder_collection = db["folders"]
 
 def setup_indexes():
     """Create database indexes for better performance"""
@@ -35,8 +36,86 @@ def setup_indexes():
         logger.error(f"Error creating database indexes: {str(e)}")
         return False
 
+async def create_folder(
+    user_id: str,
+    folder_name: str,
+    description: str = ""
+) -> Optional[str]:
+    """
+    Create a new folder for a user.
+    
+    Args:
+        user_id: ID of the user who owns the folder
+        folder_name: Name of the folder
+        description: Optional description of the folder
+        
+    Returns:
+        Folder ID if successful, None otherwise
+    """
+    try:
+        folder_id = str(uuid.uuid4())
+        folder_doc = {
+            "_id": folder_id,
+            "user_id": user_id,
+            "folder_name": folder_name,
+            "description": description,
+            "document_count": 0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        folder_collection.insert_one(folder_doc)
+        logger.info(f"Folder created successfully. ID: {folder_id}")
+        return folder_id
+    except Exception as e:
+        logger.error(f"Error creating folder: {str(e)}")
+        return None
+
+async def get_user_folders(user_id: str) -> List[Dict[str, Any]]:
+    """
+    Get all folders for a user.
+    
+    Args:
+        user_id: ID of the user
+        
+    Returns:
+        List of folder objects
+    """
+    try:
+        folders = list(folder_collection.find({"user_id": user_id}))
+        # Convert ObjectId to string for JSON serialization
+        for folder in folders:
+            if isinstance(folder.get("_id"), ObjectId):
+                folder["_id"] = str(folder["_id"])
+        return folders
+    except Exception as e:
+        logger.error(f"Error retrieving user folders: {str(e)}")
+        return []
+
+async def get_folder_documents(folder_id: str) -> List[Dict[str, Any]]:
+    """
+    Get all documents in a folder.
+    
+    Args:
+        folder_id: ID of the folder
+        
+    Returns:
+        List of document objects
+    """
+    try:
+        documents = list(document_collection.find({"folder_id": folder_id}))
+        # Convert ObjectId to string for JSON serialization
+        for doc in documents:
+            if isinstance(doc.get("_id"), ObjectId):
+                doc["_id"] = str(doc["_id"])
+        return documents
+    except Exception as e:
+        logger.error(f"Error retrieving folder documents: {str(e)}")
+        return []
+
 async def store_document(
     user_id: str,
+    folder_id: str,
     document_name: str,
     content: str,
     metadata: Dict[str, Any] = None
@@ -46,6 +125,7 @@ async def store_document(
     
     Args:
         user_id: ID of the user who owns the document
+        folder_id: ID of the folder containing the document
         document_name: Name of the document
         content: Document content
         metadata: Additional document metadata
@@ -58,6 +138,7 @@ async def store_document(
         doc = {
             "_id": document_id,
             "user_id": user_id,
+            "folder_id": folder_id,
             "document_name": document_name,
             "content": content,
             "metadata": metadata or {},
@@ -66,6 +147,13 @@ async def store_document(
         }
         
         document_collection.insert_one(doc)
+        
+        # Update folder document count
+        folder_collection.update_one(
+            {"_id": folder_id},
+            {"$inc": {"document_count": 1}}
+        )
+        
         logger.info(f"Document stored successfully. ID: {document_id}")
         return document_id
     except Exception as e:
