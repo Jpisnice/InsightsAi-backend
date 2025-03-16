@@ -1,19 +1,20 @@
 # Document Embedding API
 
-This API provides document embedding and semantic search capabilities using the all-MiniLM-L6-v2 model from Sentence Transformers.
+This API provides document embedding and semantic search capabilities using the all-MiniLM-L6-v2 model from Sentence Transformers and Pinecone for vector storage.
 
 ## Features
 
 - Upload markdown documents for processing and embedding
 - Automatic chunking of documents with configurable sizes
-- Semantic search across documents using cosine similarity
-- User-specific document management
+- Semantic search across documents using cosine similarity (via Pinecone)
+- User-specific document management (MongoDB)
 - RESTful API with FastAPI
 
 ## Prerequisites
 
 - Python 3.11 or higher
 - MongoDB instance (local or Atlas)
+- Pinecone account and API key
 - [UV](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 
 ## Project Structure
@@ -22,7 +23,7 @@ This API provides document embedding and semantic search capabilities using the 
 mini-lm/
 │
 ├── modules/             # Core functionality modules
-│   ├── embedding_service.py    # Embedding generation service
+│   ├── embedding_service.py    # Embedding generation service (Pinecone)
 │   ├── document_processor.py   # Document chunking and processing
 │   ├── mongodb_config.py       # MongoDB configuration
 │   └── database.py             # Database operations
@@ -80,10 +81,13 @@ uv tree
 
 ## Configuration
 
-1. Configure your MongoDB connection in the `.env` file:
+1. Configure your MongoDB connection and Pinecone API key in the `.env` file:
 
 ```properties
 MONGODB_URI="your-mongodb-connection-string"
+PINECONE_API_KEY="your-pinecone-api-key"
+PINECONE_ENVIRONMENT="your-pinecone-environment" #e.g us-east-1
+PINECONE_INDEX="your-pinecone-index-name"
 ```
 
 ## Setting Up MongoDB
@@ -186,6 +190,14 @@ If you encounter MongoDB connection errors:
 3. Ensure network connectivity to MongoDB host
 4. Check firewall settings
 5. Make sure your IP address is whitelisted in the MongoDB Atlas network access settings
+
+### Pinecone Connection Issues
+
+If you encounter Pinecone connection errors:
+
+1. Verify your API key and environment in `.env`
+2. Check if the Pinecone index exists
+3. Ensure network connectivity to Pinecone
 
 ### Model Loading Issues
 

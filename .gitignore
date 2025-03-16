@@ -21,3 +21,7 @@ wheels/
 
 #uv
 uv.lock
+
+#reference
+reference.py
+pinecone_setup.py
